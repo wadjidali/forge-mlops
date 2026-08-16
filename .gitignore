@@ -1,0 +1,15 @@
+# Environnement virtuel
+venv/
+.venv/
+
+# MLflow (base de données & artefacts lourds)
+mlruns/
+mlflow.db
+
+# Cache Python
+__pycache__/
+*.pyc
+
+# IDE / Système
+.vscode/
+.DS_Store
