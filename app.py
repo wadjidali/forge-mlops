@@ -1,0 +1,63 @@
+import glob
+import os
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import mlflow.pyfunc
+
+app = FastAPI(
+    title="Forge Sentiment API",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
+)
+model = None
+
+
+def load_model_safely():
+  global model
+  try:
+    # Recherche du dossier d'artefact MLflow dans /app/mlruns
+    found_files = glob.glob("/app/mlruns/**/MLmodel", recursive=True)
+    print(f"🔍 Fichiers trouvés : {found_files}", flush=True)
+
+    if found_files:
+      model_dir = os.path.dirname(found_files[-1])
+      print(f"📦 Chargement depuis : {model_dir}", flush=True)
+      model = mlflow.pyfunc.load_model(model_dir)
+      print("✅ Modèle chargé avec succès !", flush=True)
+    else:
+      print("⚠️ Aucun MLmodel trouvé.", flush=True)
+  except Exception as e:
+    print(f"❌ Erreur de chargement : {e}", flush=True)
+
+
+# Chargement au démarrage
+load_model_safely()
+
+
+class TextRequest(BaseModel):
+  text: str
+
+
+@app.get("/")
+def home():
+  return {"status": "online", "model_loaded": model is not None}
+
+
+@app.post("/predict")
+def predict(request: TextRequest):
+  if model is None:
+    raise HTTPException(
+        status_code=500, detail="Modèle non chargé dans le conteneur."
+    )
+
+  try:
+    preds = model.predict([request.text])
+    pred_val = int(preds[0])
+    return {
+        "text": request.text,
+        "prediction": pred_val,
+        "sentiment": "Positif" if pred_val == 1 else "Négatif",
+    }
+  except Exception as e:
+    raise HTTPException(status_code=500, detail=str(e))
