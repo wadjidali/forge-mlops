@@ -16,31 +16,27 @@ model = None
 def load_model_safely():
     global model
     try:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        search_paths = [
-            os.path.join(base_dir, "mlruns", "**", "MLmodel"),
-            "./mlruns/**/MLmodel",
-            "/app/mlruns/**/MLmodel"
-        ]
+        # Cherche TOUS les fichiers nommés MLmodel peu importe la profondeur dans mlruns
+        base_dir = Path(__file__).resolve().parent
+        mlruns_dir = base_dir / "mlruns"
         
-        found_files = []
-        for path in search_paths:
-            found_files.extend(glob.glob(path, recursive=True))
+        found_files = list(mlruns_dir.rglob("MLmodel"))
 
         print(f"🔍 Fichiers trouvés : {found_files}", flush=True)
 
         if found_files:
-            # 💡 Trier par date de modification pour choper le plus récent
-            found_files.sort(key=os.path.getmtime)
-            model_dir = os.path.dirname(found_files[-1])
+            # Trier par date de modification du fichier
+            found_files.sort(key=lambda p: p.stat().st_mtime)
+            model_dir = str(found_files[-1].parent)
             
             print(f"📦 Chargement du modèle le plus récent depuis : {model_dir}", flush=True)
             model = mlflow.pyfunc.load_model(model_dir)
             print("✅ Modèle chargé avec succès !", flush=True)
         else:
-            print("⚠️ Aucun MLmodel trouvé.", flush=True)
+            print("⚠️ Aucun MLmodel trouvé dans mlruns.", flush=True)
     except Exception as e:
         print(f"❌ Erreur de chargement : {e}", flush=True)
+
 
 class TextRequest(BaseModel):
   text: str
