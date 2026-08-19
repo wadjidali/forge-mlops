@@ -1,0 +1,25 @@
+artifact_path: file:C:/Users/HP/forge-mlops/mlruns/1/models/m-8ab89bb936954064a390c3bf61146724/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.skops
+    predict_fn: predict
+    python_version: 3.13.5
+  sklearn:
+    code: null
+    pickled_model: model.skops
+    serialization_format: skops
+    sklearn_version: 1.9.0
+    skops_trusted_types:
+    - xgboost.core.Booster
+    - xgboost.sklearn.XGBClassifier
+mlflow_version: 3.15.1
+model_id: m-8ab89bb936954064a390c3bf61146724
+model_size_bytes: 1323909
+model_uuid: m-8ab89bb936954064a390c3bf61146724
+prompts: null
+run_id: ab4e107751a540daaf6d843b0eff3e0e
+utc_time_created: '2026-08-17 12:14:29.053253'

@@ -1,0 +1,22 @@
+artifact_path: file:C:/Users/HP/forge-mlops/mlruns/1/models/m-1b76e888987e4d18923b13390712de84/artifacts
+flavors:
+  python_function:
+    data: model.ubj
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.xgboost
+    python_version: 3.13.5
+  xgboost:
+    code: null
+    data: model.ubj
+    model_class: xgboost.sklearn.XGBClassifier
+    model_format: ubj
+    xgb_version: 3.4.0
+mlflow_version: 3.15.1
+model_id: m-1b76e888987e4d18923b13390712de84
+model_size_bytes: 88491
+model_uuid: m-1b76e888987e4d18923b13390712de84
+prompts: null
+run_id: e33b935d6b5b4c94b69f9f0c0255fa97
+utc_time_created: '2026-08-15 09:06:29.621102'
