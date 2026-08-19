@@ -17,101 +17,85 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from xgboost import XGBClassifier
 
 # Config MLflow
 mlflow.set_experiment("Forge_NLP_Classification")
 
 
 def load_data():
-  random.seed(42)
+    random.seed(42)
 
-  # Phrases positives variées
-  pos_sentences = [
-      "This product is fantastic, I love it!",
-      "Great item, highly recommended and wonderful quality.",
-      "Amazing purchase, works great and superb performance.",
-      "I think this gadget is really excellent and impressive.",
-      "Absolutely wonderful tool, would buy again without hesitation.",
-      "What a fantastic device, outstanding service!",
-      "Superb experience, awesome product and great features.",
-      "Very happy with this item, fantastic quality and value.",
-  ]
+    pos_sentences = [
+        "This product is fantastic, I love it!",
+        "Great item, highly recommended and wonderful quality.",
+        "Amazing purchase, works great and superb performance.",
+        "I think this gadget is really excellent and impressive.",
+        "Absolutely wonderful tool, would buy again without hesitation.",
+        "What a fantastic device, outstanding service!",
+        "Superb experience, awesome product and great features.",
+        "Very happy with this item, fantastic quality and value.",
+    ]
 
-  # Phrases négatives variées
-  neg_sentences = [
-      "This gadget is terrible and completely useless.",
-      "Awful product, very disappointing and poor quality.",
-      "I hate this item, it barely works and is terrible.",
-      "Horrible experience, subpar performance and frustrating.",
-      "Disappointing purchase, would not buy again.",
-      "What a terrible tool, not recommended at all.",
-      "Subpar quality, mediocre device and poor service.",
-      "Very unhappy with this purchase, awful and broken.",
-  ]
+    neg_sentences = [
+        "This gadget is terrible and completely useless.",
+        "Awful product, very disappointing and poor quality.",
+        "I hate this item, it barely works and is terrible.",
+        "Horrible experience, subpar performance and frustrating.",
+        "Disappointing purchase, would not buy again.",
+        "What a terrible tool, not recommended at all.",
+        "Subpar quality, mediocre device and poor service.",
+        "Very unhappy with this purchase, awful and broken.",
+    ]
 
-  # Multiplication pour augmenter la taille du jeu de données
-  pos_data = pos_sentences * 15
-  neg_data = neg_sentences * 15
+    pos_data = pos_sentences * 15
+    neg_data = neg_sentences * 15
 
-  df = pd.DataFrame({
-      "text": pos_data + neg_data,
-      "label": [1] * len(pos_data) + [0] * len(neg_data),
-  })
+    df = pd.DataFrame({
+        "text": pos_data + neg_data,
+        "label": [1] * len(pos_data) + [0] * len(neg_data),
+    })
 
-  return df.sample(frac=1, random_state=42).reset_index(drop=True)
+    return df.sample(frac=1, random_state=42).reset_index(drop=True)
 
 
-def run_experiment(model_type="random_forest", params=None):
-  if params is None:
-    params = {}
+def run_experiment(params=None):
+    if params is None:
+        params = {}
 
-  df = load_data()
-  X_train, X_test, y_train, y_test = train_test_split(
-      df["text"],
-      df["label"],
-      test_size=0.25,
-      random_state=42,
-      stratify=df["label"],
-  )
-
-  with mlflow.start_run(run_name=f"Run_{model_type.upper()}"):
-    # Vectoriseur adapté au petit corpus
-    vectorizer = TfidfVectorizer(
-        max_features=300, ngram_range=(1, 2), stop_words="english"
+    df = load_data()
+    X_train, X_test, y_train, y_test = train_test_split(
+        df["text"],
+        df["label"],
+        test_size=0.25,
+        random_state=42,
+        stratify=df["label"],
     )
 
-    if model_type == "random_forest":
-      clf = RandomForestClassifier(
-          n_estimators=params.get("n_estimators", 100),
-          max_depth=params.get("max_depth", 5),
-          random_state=42,
-      )
-    else:
-      clf = XGBClassifier(
-          n_estimators=params.get("n_estimators", 100),
-          learning_rate=params.get("learning_rate", 0.1),
-          random_state=42,
-      )
+    with mlflow.start_run(run_name="Run_RANDOM_FOREST"):
+        vectorizer = TfidfVectorizer(
+            max_features=300, ngram_range=(1, 2), stop_words="english"
+        )
 
-    pipeline = Pipeline([("tfidf", vectorizer), ("clf", clf)])
-    pipeline.fit(X_train, y_train)
+        clf = RandomForestClassifier(
+            n_estimators=params.get("n_estimators", 100),
+            max_depth=params.get("max_depth", 5),
+            random_state=42,
+        )
 
-    y_pred = pipeline.predict(X_test)
-    acc = accuracy_score(y_test, y_pred)
-    mlflow.log_metric("accuracy", acc)
+        pipeline = Pipeline([("tfidf", vectorizer), ("clf", clf)])
+        pipeline.fit(X_train, y_train)
 
-    mlflow.sklearn.log_model(
-        pipeline,
-        "model",
-        skops_trusted_types=[
-            "xgboost.core.Booster",
-            "xgboost.sklearn.XGBClassifier",
-        ],
-    )
-    print(f"[{model_type.upper()}] Run terminé. Accuracy: {acc:.4f}")
+        y_pred = pipeline.predict(X_test)
+        acc = accuracy_score(y_test, y_pred)
+        mlflow.log_metric("accuracy", acc)
+
+        # Enregistrement propre du Pipeline Sklearn complet
+        mlflow.sklearn.log_model(
+            sk_model=pipeline,
+            artifact_path="model"
+        )
+        print(f"[RANDOM_FOREST] Run terminé. Accuracy: {acc:.4f}")
 
 
 if __name__ == "__main__":
-  run_experiment("random_forest", {"n_estimators": 50, "max_depth": 5})
-  run_experiment("xgboost", {"n_estimators": 100, "learning_rate": 0.1})
+    run_experiment({"n_estimators": 100, "max_depth": 5})
