@@ -14,22 +14,25 @@ model = None
 
 
 def load_model_safely():
-  global model
-  try:
-    # Recherche du dossier d'artefact MLflow dans /app/mlruns
-    found_files = glob.glob("/app/mlruns/**/MLmodel", recursive=True)
-    print(f"🔍 Fichiers trouvés : {found_files}", flush=True)
+    global model
+    try:
+        # Recherche dans le dossier courant (local) OU dans /app (Docker)
+        search_paths = ["./mlruns/**/MLmodel", "/app/mlruns/**/MLmodel"]
+        found_files = []
+        for path in search_paths:
+            found_files.extend(glob.glob(path, recursive=True))
 
-    if found_files:
-      model_dir = os.path.dirname(found_files[-1])
-      print(f"📦 Chargement depuis : {model_dir}", flush=True)
-      model = mlflow.pyfunc.load_model(model_dir)
-      print("✅ Modèle chargé avec succès !", flush=True)
-    else:
-      print("⚠️ Aucun MLmodel trouvé.", flush=True)
-  except Exception as e:
-    print(f"❌ Erreur de chargement : {e}", flush=True)
+        print(f"🔍 Fichiers trouvés : {found_files}", flush=True)
 
+        if found_files:
+            model_dir = os.path.dirname(found_files[-1])
+            print(f"📦 Chargement depuis : {model_dir}", flush=True)
+            model = mlflow.pyfunc.load_model(model_dir)
+            print("✅ Modèle chargé avec succès !", flush=True)
+        else:
+            print("⚠️ Aucun MLmodel trouvé.", flush=True)
+    except Exception as e:
+        print(f"❌ Erreur de chargement : {e}", flush=True)
 
 # Chargement au démarrage
 load_model_safely()
