@@ -16,8 +16,14 @@ model = None
 def load_model_safely():
     global model
     try:
-        # Recherche dans le dossier courant (local) OU dans /app (Docker)
-        search_paths = ["./mlruns/**/MLmodel", "/app/mlruns/**/MLmodel"]
+        # Chemins de recherche relatifs et absolus
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        search_paths = [
+            os.path.join(base_dir, "mlruns", "**", "MLmodel"),
+            "./mlruns/**/MLmodel",
+            "/app/mlruns/**/MLmodel"
+        ]
+        
         found_files = []
         for path in search_paths:
             found_files.extend(glob.glob(path, recursive=True))
@@ -33,7 +39,6 @@ def load_model_safely():
             print("⚠️ Aucun MLmodel trouvé.", flush=True)
     except Exception as e:
         print(f"❌ Erreur de chargement : {e}", flush=True)
-
 # Chargement au démarrage
 load_model_safely()
 

@@ -3,7 +3,7 @@ venv/
 .venv/
 
 # MLflow (base de données & artefacts lourds)
-mlruns/
+#mlruns/
 mlflow.db
 
 # Cache Python
