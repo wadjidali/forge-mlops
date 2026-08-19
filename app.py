@@ -65,7 +65,6 @@ def predict(request: TextRequest):
     return {
         "text": request.text,
         "prediction": pred_val,
-        "sentiment": "Positif" if pred_val == 1 else "Négatif",
-    }
+        "sentiment": "Positif" if pred_val == 0 else "Négatif",    }
   except Exception as e:
     raise HTTPException(status_code=500, detail=str(e))
